@@ -27,6 +27,7 @@ import com.drawguess.game.state.Stroke
 import com.drawguess.game.state.Tool
 import java.util.UUID
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.sqrt
 
 /**
@@ -56,7 +57,7 @@ fun DrawingCanvas(
                         strokeId = id
                         lastPoint = p
                         onAction(
-                            action("begin", id, p, currentTool)
+                            action("begin", id, p, currentTool, aspectOf(size))
                         )
                     },
                     onDrag = { change, _ ->
@@ -65,14 +66,14 @@ fun DrawingCanvas(
                         val previous = lastPoint ?: p
                         if (distance(p, previous) >= 0.002f) {
                             lastPoint = p
-                            onAction(action("draw", id, p, currentTool))
+                            onAction(action("draw", id, p, currentTool, aspectOf(size)))
                         }
                         change.consume()
                     },
                     onDragEnd = {
                         val id = strokeId
                         if (id != null) {
-                            onAction(action("end", id, lastPoint ?: Point(0f, 0f), currentTool))
+                            onAction(action("end", id, lastPoint ?: Point(0f, 0f), currentTool, aspectOf(size)))
                         }
                         strokeId = null
                         lastPoint = null
@@ -88,17 +89,25 @@ fun DrawingCanvas(
             drawRect(Color.White)
             for (stroke in strokes) {
                 if (stroke.points.isEmpty()) continue
+                // 按发送端画布宽高比等比适配（letterbox），跨端查看不拉伸
+                val aspect = stroke.aspect
+                val scale = min(size.width / aspect, size.height)
+                val offsetX = (size.width - aspect * scale) / 2f
+                val offsetY = (size.height - scale) / 2f
                 val path = Path().apply {
-                    moveTo(stroke.points[0].x * size.width, stroke.points[0].y * size.height)
+                    moveTo(
+                        stroke.points[0].x * aspect * scale + offsetX,
+                        stroke.points[0].y * scale + offsetY
+                    )
                     for (point in stroke.points.drop(1)) {
-                        lineTo(point.x * size.width, point.y * size.height)
+                        lineTo(point.x * aspect * scale + offsetX, point.y * scale + offsetY)
                     }
                 }
                 drawPath(
                     path = path,
                     color = parseColor(stroke.color),
                     style = DrawStroke(
-                        width = max(1f, stroke.size / 1000f * size.height),
+                        width = max(1f, stroke.size / 1000f * scale),
                         cap = StrokeCap.Round,
                         join = StrokeJoin.Round
                     )
@@ -120,7 +129,16 @@ private fun normalize(offset: Offset, size: IntSize): Point {
 private fun distance(a: Point, b: Point): Float =
     sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y))
 
-private fun action(type: String, strokeId: String, point: Point, tool: Tool): Dtos.DrawActionDto =
+private fun aspectOf(size: IntSize): Float =
+    size.width.toFloat() / size.height.coerceAtLeast(1)
+
+private fun action(
+    type: String,
+    strokeId: String,
+    point: Point,
+    tool: Tool,
+    aspect: Float
+): Dtos.DrawActionDto =
     Dtos.DrawActionDto().apply {
         this.type = type
         this.strokeId = strokeId
@@ -128,6 +146,7 @@ private fun action(type: String, strokeId: String, point: Point, tool: Tool): Dt
         y = point.y
         color = tool.color
         size = tool.size
+        this.aspect = aspect
     }
 
 private fun parseColor(hex: String): Color {

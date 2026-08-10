@@ -248,6 +248,11 @@ public static class GameEngine
             return (false, "无效的笔刷大小");
         }
 
+        if (!float.IsFinite(action.Aspect) || action.Aspect is < 0.1f or > 10f)
+        {
+            return (false, "无效的画布宽高比");
+        }
+
         return (true, null);
     }
 }

@@ -97,7 +97,7 @@ async function gameFlow() {
   await host.invoke("RestartGameAsync");
   await once(guest, "GameStateUpdatedAsync", (s) => s.state === "RoundActive");
   const drawPromise = once(guest, "DrawActionReceivedAsync", (d) => d.type === "begin");
-  await host.invoke("SendDrawActionAsync", { type: "begin", strokeId: "stroke-1", x: 0.1, y: 0.2, color: "#ff006e", size: 8 });
+  await host.invoke("SendDrawActionAsync", { type: "begin", strokeId: "stroke-1", x: 0.1, y: 0.2, color: "#ff006e", size: 8, aspect: 1.6 });
   const draw = await drawPromise;
   check("画布笔画转发到观众", draw.strokeId === "stroke-1" && draw.color === "#ff006e", JSON.stringify(draw));
 

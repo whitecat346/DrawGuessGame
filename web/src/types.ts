@@ -81,4 +81,5 @@ export interface DrawAction {
   y: number;
   color: string;
   size: number;
+  aspect: number;
 }

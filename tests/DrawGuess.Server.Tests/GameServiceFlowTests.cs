@@ -140,11 +140,11 @@ public class GameServiceFlowTests
         var (roomId, _) = await CreateRoomAsync();
         await _game.StartGameAsync("c1");
 
-        await _game.SendDrawActionAsync("c2", new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 4));
+        await _game.SendDrawActionAsync("c2", new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 4, 1.6f));
         Assert.DoesNotContain(_bus.DrawActions, d => d.RoomId == roomId);
         Assert.Contains(_bus.Errors, e => e.Message.Contains("只有当前画师可以作画"));
 
-        await _game.SendDrawActionAsync("c1", new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 4));
+        await _game.SendDrawActionAsync("c1", new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 4, 1.6f));
         Assert.Contains(_bus.DrawActions, d => d.RoomId == roomId && d.Action.StrokeId == "s1");
 
         await _game.HandleHintAsync("c2", "两个字");

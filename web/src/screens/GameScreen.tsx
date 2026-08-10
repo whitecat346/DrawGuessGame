@@ -189,7 +189,7 @@ export function GameScreen({ state, api, dispatch }: GameScreenProps) {
             </div>
           )}
 
-          <div className="relative flex-1 min-h-0 border-2 md:border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center overflow-hidden">
+          <div className="relative flex-1 min-h-0 min-w-0 border-2 md:border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
             <DrawingCanvas
               active={roundActive}
               isPainter={isPainter}
@@ -203,7 +203,7 @@ export function GameScreen({ state, api, dispatch }: GameScreenProps) {
           </div>
         </div>
 
-        <div className="flex md:w-80 flex-col min-h-0 md:ml-0">
+        <div className="flex md:w-80 shrink-0 flex-col min-h-0 md:ml-0">
           <div className="md:hidden grid grid-cols-2 border-2 border-black mb-2">
             <button
               className={`font-black py-2 text-sm transition-all duration-200 ${tab === "chat" ? "bg-black text-white" : "bg-white text-black"}`}

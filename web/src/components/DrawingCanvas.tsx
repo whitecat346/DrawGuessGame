@@ -5,6 +5,7 @@ interface Stroke {
   id: string;
   color: string;
   size: number;
+  aspect: number;
   points: { x: number; y: number }[];
 }
 
@@ -54,34 +55,41 @@ export function DrawingCanvas({
     if (!container) return;
     const dpr = window.devicePixelRatio || 1;
     const containerRect = container.getBoundingClientRect();
-    // 画布固定为正方形，跨端查看不拉伸
-    const size = Math.max(1, Math.min(containerRect.width, containerRect.height));
-    if (canvas.width !== Math.round(size * dpr) || canvas.height !== Math.round(size * dpr)) {
-      canvas.width = Math.round(size * dpr);
-      canvas.height = Math.round(size * dpr);
+    const width = Math.max(1, containerRect.width);
+    const height = Math.max(1, containerRect.height);
+    if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
     }
     // 明确设置 CSS 尺寸，避免 Android 上 canvas 缓冲与布局尺寸不一致导致拉伸
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, size, size);
+    ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, size, size);
+    ctx.fillRect(0, 0, width, height);
 
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     for (const id of orderRef.current) {
       const stroke = strokesRef.current.get(id);
       if (!stroke || stroke.points.length === 0) continue;
+      // 按发送端画布宽高比等比适配（letterbox），跨端查看不拉伸
+      const aspect = stroke.aspect > 0 ? stroke.aspect : width / height;
+      const scale = Math.min(width / aspect, height);
+      const offsetX = (width - aspect * scale) / 2;
+      const offsetY = (height - scale) / 2;
+      const mapX = (x: number) => x * aspect * scale + offsetX;
+      const mapY = (y: number) => y * scale + offsetY;
       ctx.strokeStyle = stroke.color;
-      ctx.lineWidth = Math.max(1, (stroke.size / 1000) * size);
+      ctx.lineWidth = Math.max(1, (stroke.size / 1000) * scale);
       ctx.beginPath();
-      ctx.moveTo(stroke.points[0].x * size, stroke.points[0].y * size);
+      ctx.moveTo(mapX(stroke.points[0].x), mapY(stroke.points[0].y));
       for (const point of stroke.points.slice(1)) {
-        ctx.lineTo(point.x * size, point.y * size);
+        ctx.lineTo(mapX(point.x), mapY(point.y));
       }
       ctx.stroke();
     }
@@ -114,10 +122,12 @@ export function DrawingCanvas({
       event.preventDefault();
       canvas.setPointerCapture(event.pointerId);
       const point = toNormalized(event);
+      const aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight);
       const stroke: Stroke = {
         id: crypto.randomUUID(),
         color: toolRef.current.color,
         size: toolRef.current.size,
+        aspect,
         points: [point],
       };
       currentRef.current = stroke;
@@ -125,7 +135,7 @@ export function DrawingCanvas({
       lastPointRef.current = point;
       strokesRef.current.set(stroke.id, stroke);
       orderRef.current.push(stroke.id);
-      sendDrawAction({ type: "begin", strokeId: stroke.id, x: point.x, y: point.y, color: stroke.color, size: stroke.size });
+      sendDrawAction({ type: "begin", strokeId: stroke.id, x: point.x, y: point.y, color: stroke.color, size: stroke.size, aspect });
       redraw();
     };
 
@@ -137,7 +147,7 @@ export function DrawingCanvas({
       if (Math.hypot(point.x - last.x, point.y - last.y) < 0.002) return;
       lastPointRef.current = point;
       currentRef.current.points.push(point);
-      sendDrawAction({ type: "draw", strokeId: currentRef.current.id, x: point.x, y: point.y, color: currentRef.current.color, size: currentRef.current.size });
+      sendDrawAction({ type: "draw", strokeId: currentRef.current.id, x: point.x, y: point.y, color: currentRef.current.color, size: currentRef.current.size, aspect: currentRef.current.aspect });
       scheduleRedraw();
     };
 
@@ -145,7 +155,7 @@ export function DrawingCanvas({
       if (!drawingRef.current || !currentRef.current) return;
       event.preventDefault();
       drawingRef.current = false;
-      sendDrawAction({ type: "end", strokeId: currentRef.current.id, x: 0, y: 0, color: currentRef.current.color, size: currentRef.current.size });
+      sendDrawAction({ type: "end", strokeId: currentRef.current.id, x: 0, y: 0, color: currentRef.current.color, size: currentRef.current.size, aspect: currentRef.current.aspect });
       currentRef.current = null;
     };
 
@@ -173,7 +183,7 @@ export function DrawingCanvas({
         let stroke = strokesRef.current.get(action.strokeId);
         if (action.type === "begin") {
           if (stroke) return;
-          stroke = { id: action.strokeId, color: action.color, size: action.size, points: [] };
+          stroke = { id: action.strokeId, color: action.color, size: action.size, aspect: action.aspect ?? 0, points: [] };
           strokesRef.current.set(stroke.id, stroke);
           orderRef.current.push(stroke.id);
         }

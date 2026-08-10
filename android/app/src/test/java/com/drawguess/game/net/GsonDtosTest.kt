@@ -22,10 +22,11 @@ class GsonDtosTest {
             y = 0.5f
             color = "#ff006e"
             size = 8
+            aspect = 1.6f
         }
         val json = gson.toJson(action)
         assertEquals(
-            """{"type":"begin","strokeId":"stroke-1","x":0.25,"y":0.5,"color":"#ff006e","size":8}""",
+            """{"type":"begin","strokeId":"stroke-1","x":0.25,"y":0.5,"color":"#ff006e","size":8,"aspect":1.6}""",
             json
         )
     }
@@ -68,6 +69,7 @@ class GsonDtosTest {
             y = 0.5f
             color = "#ff006e"
             size = 8
+            aspect = 1.6f
         }
         val message = InvocationMessage(null, null, "SendDrawActionAsync", arrayOf<Any>(action), null)
         val raw = GsonHubProtocol().writeMessage(message)

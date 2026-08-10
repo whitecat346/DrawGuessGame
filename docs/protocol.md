@@ -108,12 +108,13 @@ interface DrawAction {
   y: number;
   color: string;
   size: number;
+  aspect: number; // 发送端画布宽高比（宽/高），接收端按此等比适配
 }
 ```
 
 ## 画布同步约定
 
-- 坐标使用归一化值（0..1），客户端根据画布实际尺寸换算，保证不同分辨率下一致。
+- 坐标使用归一化值（0..1）；每个笔画携带发送端画布宽高比 `aspect`，接收端按该比例 letterbox 等比渲染，保证跨端查看不变形。
 - 每个笔画由画师客户端生成唯一 `strokeId`，依次发送 `begin` → 若干 `draw` → `end`。
 - `undoStroke` 按 `strokeId` 撤销；所有客户端维护相同的笔画栈。
 - 新回合开始服务端广播 `canvasCleared`，所有客户端清空画布。
