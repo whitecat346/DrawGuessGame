@@ -29,6 +29,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     val strokes = mutableStateListOf<Stroke>()
+    var canvasViewport by mutableStateOf(CanvasViewport())
+        private set
 
     private var client: GameClient? = null
     private var eventsJob: Job? = null
@@ -62,6 +64,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         sounds.enabled = next
         uiState = uiState.copy(soundEnabled = next)
         if (next) sounds.click()
+    }
+
+    fun updateCanvasViewport(zoom: Float, panX: Float, panY: Float) {
+        canvasViewport = CanvasViewport(zoom.coerceIn(1f, 5f), panX, panY)
     }
 
     fun createRoom(customCode: String = "") {
@@ -344,7 +350,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             is GameEvent.Draw -> applyRemoteDraw(event.action)
-            GameEvent.CanvasCleared -> strokes.clear()
+            GameEvent.CanvasCleared -> {
+                strokes.clear()
+                // 新回合/清空画布：缩放和平移回归默认
+                canvasViewport = CanvasViewport()
+            }
             is GameEvent.StrokeUndone -> strokes.removeAll { it.id == event.strokeId }
             is GameEvent.Kicked -> {
                 sounds.kick()

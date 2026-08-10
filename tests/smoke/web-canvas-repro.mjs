@@ -63,6 +63,19 @@ async function main() {
     await page.waitForSelector('canvas[aria-label="画布"]', { timeout: 15000 });
     await sleep(2000);
 
+    // 缩放冒烟：Ctrl+滚轮 放大/缩小，随后画布尺寸必须保持稳定
+    const canvasBox = await page.evaluate(() => {
+      const r = document.querySelector('canvas[aria-label="画布"]').getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    });
+    await page.mouse.move(canvasBox.x, canvasBox.y);
+    await page.keyboard.down("Control");
+    await page.mouse.wheel({ deltaY: -240 });
+    await page.mouse.wheel({ deltaY: -240 });
+    await page.mouse.wheel({ deltaY: 240 });
+    await page.keyboard.up("Control");
+    await sleep(1500);
+
     console.log("采样画布尺寸（每 300ms）：");
     const samples = [];
     for (let i = 0; i < 30; i++) {
