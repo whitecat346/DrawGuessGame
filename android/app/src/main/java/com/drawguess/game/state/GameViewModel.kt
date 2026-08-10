@@ -250,6 +250,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             id = action.strokeId,
                             color = action.color,
                             size = action.size,
+                            aspect = action.aspect,
                             points = listOf(Point(action.x, action.y))
                         )
                     )
@@ -308,6 +309,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             id = action.strokeId,
                             color = action.color,
                             size = action.size,
+                            aspect = action.aspect,
                             points = listOf(Point(action.x, action.y))
                         )
                     )

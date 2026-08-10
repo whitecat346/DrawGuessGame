@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -52,7 +51,6 @@ import com.drawguess.game.ui.theme.Ink
 import com.drawguess.game.ui.theme.Lime
 import com.drawguess.game.ui.theme.Orange
 import com.drawguess.game.ui.theme.Pink
-import kotlin.comparisons.minOf
 
 private enum class GameTab { Chat, Scores }
 
@@ -282,19 +280,16 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .border(3.dp, Ink),
-            contentAlignment = Alignment.Center
+                .border(3.dp, Ink)
+                .padding(4.dp)
         ) {
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                val side = minOf(maxWidth, maxHeight)
-                DrawingCanvas(
-                    strokes = strokeList,
-                    interactive = isPainter && roundActive,
-                    tool = tool.value,
-                    onAction = viewModel::onDrawAction,
-                    modifier = Modifier.size(side)
-                )
-            }
+            DrawingCanvas(
+                strokes = strokeList,
+                interactive = isPainter && roundActive,
+                tool = tool.value,
+                onAction = viewModel::onDrawAction,
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         Row(

@@ -86,9 +86,13 @@ public class GameEngineTests
     [Fact]
     public void ValidateDrawAction_RejectsInvalidActions()
     {
-        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("jump", "s1", 0.5f, 0.5f, "#000000", 4)).Valid);
-        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("begin", "s1", 5f, 0.5f, "#000000", 4)).Valid);
-        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 0)).Valid);
-        Assert.True(GameEngine.ValidateDrawAction(new DrawActionDto("draw", "s1", 0.5f, 0.5f, "#000000", 4)).Valid);
+        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("jump", "s1", 0.5f, 0.5f, "#000000", 4, 1.6f)).Valid);
+        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("begin", "s1", 5f, 0.5f, "#000000", 4, 1.6f)).Valid);
+        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 0, 1.6f)).Valid);
+        Assert.True(GameEngine.ValidateDrawAction(new DrawActionDto("draw", "s1", 0.5f, 0.5f, "#000000", 4, 1.6f)).Valid);
+        Assert.True(GameEngine.ValidateDrawAction(new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 4, 1.6f)).Valid);
+        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 4, -1f)).Valid);
+        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 4, 20f)).Valid);
+        Assert.False(GameEngine.ValidateDrawAction(new DrawActionDto("begin", "s1", 0.5f, 0.5f, "#000000", 4, 0f)).Valid);
     }
 }

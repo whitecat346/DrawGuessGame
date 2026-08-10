@@ -85,5 +85,6 @@ public final class Dtos {
         public float y;
         public String color;
         public int size;
+        public float aspect;
     }
 }

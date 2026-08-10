@@ -6,6 +6,7 @@ data class Stroke(
     val id: String,
     val color: String,
     val size: Int,
+    val aspect: Float,
     val points: List<Point>
 )
 
