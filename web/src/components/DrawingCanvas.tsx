@@ -345,7 +345,7 @@ export function DrawingCanvas({
   return (
     <canvas
       ref={canvasRef}
-      className={`w-full h-full ${isPainter && active ? "cursor-crosshair" : "cursor-default"}`}
+      className={`w-full h-full touch-none ${isPainter && active ? "cursor-crosshair" : "cursor-default"}`}
       aria-label="画布"
     />
   );
