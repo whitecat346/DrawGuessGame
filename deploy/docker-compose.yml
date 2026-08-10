@@ -9,5 +9,28 @@ services:
     ports:
       - "${PORT:-8080}:8080"
     environment:
-      # 反向代理或同机直访时按需修改；同源部署时无需 CORS 配置。
+      # 容器内监听地址；对外端口由上方 ports 决定（默认 8080，可用 PORT 环境变量覆盖）。
       ASPNETCORE_URLS: http://+:8080
+      # 日志与系统时间使用本地时区（可按需修改）。
+      TZ: Asia/Shanghai
+    init: true
+    stop_grace_period: 30s
+    healthcheck:
+      # 运行时镜像未内置 curl/wget，使用 bash /dev/tcp 探测 /health
+      test:
+        [
+          "CMD",
+          "bash",
+          "-c",
+          'exec 3<>/dev/tcp/127.0.0.1/8080 && printf "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep -q "\"status\":\"ok\""'
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
