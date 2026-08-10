@@ -51,19 +51,14 @@ export function DrawingCanvas({
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const container = canvas.parentElement;
-    if (!container) return;
     const dpr = window.devicePixelRatio || 1;
-    const containerRect = container.getBoundingClientRect();
-    const width = Math.max(1, containerRect.width);
-    const height = Math.max(1, containerRect.height);
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
     if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
     }
-    // 明确设置 CSS 尺寸，避免 Android 上 canvas 缓冲与布局尺寸不一致导致拉伸
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -165,7 +160,9 @@ export function DrawingCanvas({
     canvas.addEventListener("pointercancel", endStroke);
 
     const resizeObserver = new ResizeObserver(() => redraw());
-    if (canvas.parentElement) resizeObserver.observe(canvas.parentElement);
+    // 观察 canvas 自身：CSS 尺寸（w-full h-full）随容器变化时同步缓冲；
+    // 设置 canvas.width/height（attribute）不会改变 CSS 布局，因此不会产生反馈循环。
+    resizeObserver.observe(canvas);
 
     return () => {
       canvas.removeEventListener("pointerdown", onPointerDown);
