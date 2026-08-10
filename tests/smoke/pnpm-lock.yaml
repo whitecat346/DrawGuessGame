@@ -11,6 +11,9 @@ importers:
       '@microsoft/signalr':
         specifier: ^10.0.11
         version: 10.0.11
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
       puppeteer-core:
         specifier: ^25.5.0
         version: 25.5.0
@@ -99,6 +102,10 @@ packages:
     peerDependenciesMeta:
       encoding:
         optional: true
+
+  pngjs@7.0.0:
+    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
+    engines: {node: '>=14.19.0'}
 
   psl@1.15.0:
     resolution: {integrity: sha512-JZd3gMVBAVQkSs6HdNZo9Sdo0LNcQeMNP3CozBJb3JYC/QUYZTnKxP+f8oWRX4rHP5EurWxqAHTSwUCjlNKa1w==}
@@ -266,6 +273,8 @@ snapshots:
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
+
+  pngjs@7.0.0: {}
 
   psl@1.15.0:
     dependencies:

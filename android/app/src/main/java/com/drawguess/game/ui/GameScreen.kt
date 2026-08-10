@@ -282,13 +282,17 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .border(3.dp, Ink)
-                .padding(4.dp),
+                .border(3.dp, Ink),
             contentAlignment = Alignment.Center
         ) {
             if (isPainter) {
-                // 画师模式：画布保持正方形（消息栏已压缩，尽量占满可用空间）
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                // 画师模式：画布保持正方形并居中，四周保留边距
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     val side = minOf(maxWidth, maxHeight)
                     DrawingCanvas(
                         strokes = strokeList,
