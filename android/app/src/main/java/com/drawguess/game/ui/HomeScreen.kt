@@ -19,7 +19,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
@@ -41,6 +44,8 @@ import java.util.Locale
 
 @Composable
 fun HomeScreen(state: GameUiState, viewModel: GameViewModel) {
+    var customCode by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -98,12 +103,26 @@ fun HomeScreen(state: GameUiState, viewModel: GameViewModel) {
                 fontFamily = FontFamily.Monospace,
                 color = Ink.copy(alpha = 0.6f)
             )
+            Spacer(Modifier.height(10.dp))
+            Text("自定义房间码（可选，6 位）", fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = customCode,
+                onValueChange = { value ->
+                    customCode = value.uppercase().filter { it.isLetterOrDigit() }.take(6)
+                },
+                singleLine = true,
+                label = { Text("不填则随机生成") },
+                shape = RoundedCornerShape(0),
+                colors = neoTextFieldColors(),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         Spacer(Modifier.height(16.dp))
         NeoButton(
             text = if (state.connecting) "连接中…" else "创建房间",
-            onClick = viewModel::createRoom,
+            onClick = { viewModel.createRoom(customCode) },
             enabled = !state.connecting,
             variant = NeoVariant.Accent,
             modifier = Modifier.fillMaxWidth()

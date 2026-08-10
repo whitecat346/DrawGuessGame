@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,9 +16,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -49,7 +52,7 @@ import com.drawguess.game.ui.theme.Ink
 import com.drawguess.game.ui.theme.Lime
 import com.drawguess.game.ui.theme.Orange
 import com.drawguess.game.ui.theme.Pink
-import kotlin.math.max
+import kotlin.comparisons.minOf
 
 private enum class GameTab { Chat, Scores }
 
@@ -209,63 +212,69 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
         }
 
         if (isPainter && roundActive) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(2.dp, Ink)
                     .background(Color.White)
                     .padding(horizontal = 8.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                DRAW_COLORS.forEach { color ->
-                    val selected = tool.value.color == color
-                    Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .background(if (color == "#ffffff") Color.White else Color(android.graphics.Color.parseColor(color)))
-                            .border(2.dp, Ink)
-                            .clickable { tool.value = tool.value.copy(color = color) }
-                            .padding(2.dp)
-                    ) {
-                        if (selected) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .border(3.dp, Cyan)
-                            )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    DRAW_COLORS.forEach { color ->
+                        val selected = tool.value.color == color
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .background(if (color == "#ffffff") Color.White else Color(android.graphics.Color.parseColor(color)))
+                                .border(2.dp, Ink)
+                                .clickable { tool.value = tool.value.copy(color = color) }
+                                .padding(2.dp)
+                        ) {
+                            if (selected) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .border(3.dp, Cyan)
+                                )
+                            }
                         }
                     }
                 }
-                Spacer(Modifier.width(4.dp))
-                DRAW_SIZES.forEach { size ->
-                    val selected = tool.value.size == size
-                    Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .background(if (selected) Lime else Color.White)
-                            .border(2.dp, Ink)
-                            .clickable { tool.value = tool.value.copy(size = size) },
-                        contentAlignment = Alignment.Center
-                    ) {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    DRAW_SIZES.forEach { size ->
+                        val selected = tool.value.size == size
                         Box(
                             modifier = Modifier
-                                .size((max(4f, size / 2f)).dp)
-                                .background(Ink)
-                        )
+                                .size(30.dp)
+                                .background(if (selected) Lime else Color.White)
+                                .border(2.dp, Ink)
+                                .clickable { tool.value = tool.value.copy(size = size) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size((2f + size * 0.9f).dp)
+                                    .background(Ink)
+                            )
+                        }
                     }
+                    Spacer(Modifier.width(4.dp))
+                    NeoButton(
+                        text = "撤销",
+                        onClick = { viewModel.undoStroke(viewModel.strokes.lastOrNull()?.id) },
+                        variant = NeoVariant.Light
+                    )
+                    NeoButton(
+                        text = "清空",
+                        onClick = viewModel::clearCanvas,
+                        variant = NeoVariant.Warning
+                    )
                 }
-                Spacer(Modifier.weight(1f))
-                NeoButton(
-                    text = "撤销",
-                    onClick = { viewModel.undoStroke(viewModel.strokes.lastOrNull()?.id) },
-                    variant = NeoVariant.Light
-                )
-                NeoButton(
-                    text = "清空",
-                    onClick = viewModel::clearCanvas,
-                    variant = NeoVariant.Warning
-                )
             }
         }
 
@@ -273,15 +282,19 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .border(3.dp, Ink)
+                .border(3.dp, Ink),
+            contentAlignment = Alignment.Center
         ) {
-            DrawingCanvas(
-                strokes = strokeList,
-                interactive = isPainter && roundActive,
-                tool = tool.value,
-                onAction = viewModel::onDrawAction,
-                modifier = Modifier.fillMaxSize()
-            )
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val side = minOf(maxWidth, maxHeight)
+                DrawingCanvas(
+                    strokes = strokeList,
+                    interactive = isPainter && roundActive,
+                    tool = tool.value,
+                    onAction = viewModel::onDrawAction,
+                    modifier = Modifier.size(side)
+                )
+            }
         }
 
         Row(

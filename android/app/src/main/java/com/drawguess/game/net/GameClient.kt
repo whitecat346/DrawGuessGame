@@ -103,6 +103,9 @@ class GameClient(private val hubUrl: String) {
     suspend fun createRoom(playerName: String, clientId: String): Dtos.JoinResultDto =
         connection.invoke(Dtos.JoinResultDto::class.java, "CreateRoomAsync", playerName, clientId).await()
 
+    suspend fun createRoomWithCode(playerName: String, clientId: String, roomCode: String): Dtos.JoinResultDto =
+        connection.invoke(Dtos.JoinResultDto::class.java, "CreateRoomWithCodeAsync", playerName, clientId, roomCode).await()
+
     suspend fun joinRoom(roomId: String, playerName: String, clientId: String): Dtos.JoinResultDto =
         connection.invoke(Dtos.JoinResultDto::class.java, "JoinRoomAsync", roomId, playerName, clientId).await()
 

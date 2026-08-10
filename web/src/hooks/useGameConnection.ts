@@ -85,8 +85,10 @@ export function useGameConnection(dispatch: (action: GameAction) => void) {
       identityRef.current.nickname = name;
       localStorage.setItem("dg.nickname", name);
     },
-    createRoom: () =>
-      invoke<JoinResult>("CreateRoomAsync", identityRef.current.nickname, identityRef.current.clientId),
+    createRoom: (customCode?: string) =>
+      customCode
+        ? invoke<JoinResult>("CreateRoomWithCodeAsync", identityRef.current.nickname, identityRef.current.clientId, customCode)
+        : invoke<JoinResult>("CreateRoomAsync", identityRef.current.nickname, identityRef.current.clientId),
     joinRoom: (roomId: string) =>
       invoke<JoinResult>("JoinRoomAsync", roomId.trim().toUpperCase(), identityRef.current.nickname, identityRef.current.clientId),
     leaveRoom: () => invoke("LeaveRoomAsync"),

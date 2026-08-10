@@ -50,24 +50,26 @@ export function DrawingCanvas({
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const container = canvas.parentElement;
+    if (!container) return;
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    const width = Math.max(1, rect.width);
-    const height = Math.max(1, rect.height);
-    if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
+    const containerRect = container.getBoundingClientRect();
+    // 画布固定为正方形，跨端查看不拉伸
+    const size = Math.max(1, Math.min(containerRect.width, containerRect.height));
+    if (canvas.width !== Math.round(size * dpr) || canvas.height !== Math.round(size * dpr)) {
+      canvas.width = Math.round(size * dpr);
+      canvas.height = Math.round(size * dpr);
     }
     // 明确设置 CSS 尺寸，避免 Android 上 canvas 缓冲与布局尺寸不一致导致拉伸
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, size, size);
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, size, size);
 
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -75,11 +77,11 @@ export function DrawingCanvas({
       const stroke = strokesRef.current.get(id);
       if (!stroke || stroke.points.length === 0) continue;
       ctx.strokeStyle = stroke.color;
-      ctx.lineWidth = Math.max(1, (stroke.size / 1000) * height);
+      ctx.lineWidth = Math.max(1, (stroke.size / 1000) * size);
       ctx.beginPath();
-      ctx.moveTo(stroke.points[0].x * width, stroke.points[0].y * height);
+      ctx.moveTo(stroke.points[0].x * size, stroke.points[0].y * size);
       for (const point of stroke.points.slice(1)) {
-        ctx.lineTo(point.x * width, point.y * height);
+        ctx.lineTo(point.x * size, point.y * size);
       }
       ctx.stroke();
     }
@@ -153,7 +155,7 @@ export function DrawingCanvas({
     canvas.addEventListener("pointercancel", endStroke);
 
     const resizeObserver = new ResizeObserver(() => redraw());
-    resizeObserver.observe(canvas);
+    if (canvas.parentElement) resizeObserver.observe(canvas.parentElement);
 
     return () => {
       canvas.removeEventListener("pointerdown", onPointerDown);

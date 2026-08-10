@@ -189,6 +189,37 @@ public class GameServiceFlowTests
         Assert.Contains(_bus.Errors, e => e.Message.Contains("词库不能为空"));
     }
 
+    [Fact]
+    public async Task CreateRoomWithCode_AcceptsValidUniqueCode()
+    {
+        var result = await _game.CreateRoomWithCodeAsync("c1", "小明", "client-1", "ABC234");
+        Assert.True(result.Success);
+        Assert.Equal("ABC234", result.RoomId);
+        Assert.True(_rooms.TryGetRoom("ABC234", out _));
+    }
+
+    [Theory]
+    [InlineData("ABC23")]
+    [InlineData("ABC0X1")]
+    [InlineData("ABCIOL")]
+    public async Task CreateRoomWithCode_RejectsInvalidFormat(string code)
+    {
+        var result = await _game.CreateRoomWithCodeAsync("c1", "小明", "client-1", code);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Error);
+    }
+
+    [Fact]
+    public async Task CreateRoomWithCode_RejectsDuplicateCode()
+    {
+        var first = await _game.CreateRoomWithCodeAsync("c1", "小明", "client-1", "ABC234");
+        Assert.True(first.Success);
+
+        var second = await _game.CreateRoomWithCodeAsync("c2", "小红", "client-2", "abc234");
+        Assert.False(second.Success);
+        Assert.Contains("占用", second.Error);
+    }
+
     private async Task<(string RoomId, Dictionary<string, string> PlayerIds)> CreateRoomAsync(
         int playerCount = 2,
         string mode = "Preemptive",

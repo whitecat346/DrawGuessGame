@@ -160,7 +160,7 @@ export function WaitingScreen({ state, api, dispatch }: WaitingScreenProps) {
             <NeoSection>房间设置</NeoSection>
             {isHost ? (
               <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <label className="space-y-1">
+                <label className="space-y-1 min-w-0">
                   <span className="font-mono text-xs">游戏模式</span>
                   <select
                     className="rounded-none border-2 md:border-4 border-black font-mono px-2 py-2 w-full bg-white"
@@ -174,7 +174,7 @@ export function WaitingScreen({ state, api, dispatch }: WaitingScreenProps) {
                     <option value="Decreasing">递减模式</option>
                   </select>
                 </label>
-                <label className="space-y-1">
+                <label className="space-y-1 min-w-0">
                   <span className="font-mono text-xs">总轮数</span>
                   <Input
                     type="number"

@@ -5,11 +5,66 @@ namespace DrawGuess.Server.Services;
 
 public sealed class RoomManager
 {
+    public const string RoomIdChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
     private readonly ConcurrentDictionary<string, Room> _rooms = new(StringComparer.OrdinalIgnoreCase);
 
     public Room CreateRoom(string connectionId, string playerName, string clientId)
     {
-        var room = new Room { RoomId = GenerateRoomId() };
+        return CreateRoomInternal(connectionId, playerName, clientId, GenerateRoomId());
+    }
+
+    public bool TryCreateRoomWithCode(
+        string connectionId,
+        string playerName,
+        string clientId,
+        string roomCode,
+        out Room room,
+        out string? error)
+    {
+        var normalized = roomCode.Trim().ToUpperInvariant();
+        error = ValidateRoomId(normalized);
+        if (error is not null)
+        {
+            room = null!;
+            return false;
+        }
+
+        if (_rooms.ContainsKey(normalized))
+        {
+            error = "房间码已被占用，请换一个";
+            room = null!;
+            return false;
+        }
+
+        room = CreateRoomInternal(connectionId, playerName, clientId, normalized);
+        return true;
+    }
+
+    public static string? ValidateRoomId(string? roomId)
+    {
+        var normalized = roomId?.Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(normalized))
+        {
+            return "房间码不能为空";
+        }
+
+        if (normalized.Length != 6)
+        {
+            return "房间码需为 6 位";
+        }
+
+        if (!normalized.All(RoomIdChars.Contains))
+        {
+            return "房间码只能包含 A-Z、2-9（不含 0、1、I、O）";
+        }
+
+        return null;
+    }
+
+    private Room CreateRoomInternal(string connectionId, string playerName, string clientId, string roomId)
+    {
+        var room = new Room { RoomId = roomId };
         var host = new Player
         {
             Id = Guid.NewGuid().ToString("N"),
@@ -52,12 +107,11 @@ public sealed class RoomManager
 
     private static string GenerateRoomId()
     {
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         return string.Create(6, Random.Shared, (span, r) =>
         {
             for (var i = 0; i < span.Length; i++)
             {
-                span[i] = chars[r.Next(chars.Length)];
+                span[i] = RoomIdChars[r.Next(RoomIdChars.Length)];
             }
         });
     }

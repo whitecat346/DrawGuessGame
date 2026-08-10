@@ -34,7 +34,7 @@ export function Card({ className = "", children }: { className?: string; childre
 }
 
 const inputBase =
-  "rounded-none border-2 md:border-4 border-black font-mono bg-white text-black px-3 py-2 text-sm md:text-base " +
+  "w-full min-w-0 rounded-none border-2 md:border-4 border-black font-mono bg-white text-black px-3 py-2 text-sm md:text-base " +
   "focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:focus:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:-translate-y-[2px] transition-all duration-200 disabled:bg-gray-100";
 
 export function Input({ className = "", ...props }: InputHTMLAttributes<HTMLInputElement>) {

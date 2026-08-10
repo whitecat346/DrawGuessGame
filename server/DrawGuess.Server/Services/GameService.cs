@@ -17,6 +17,20 @@ public sealed class GameService(
     private readonly TimeProvider _clock = clock;
 
     public async Task<JoinResultDto> CreateRoomAsync(string connectionId, string playerName, string clientId)
+        => await CreateRoomCoreAsync(connectionId, playerName, clientId, null).ConfigureAwait(false);
+
+    public async Task<JoinResultDto> CreateRoomWithCodeAsync(
+        string connectionId,
+        string playerName,
+        string clientId,
+        string roomCode)
+        => await CreateRoomCoreAsync(connectionId, playerName, clientId, roomCode).ConfigureAwait(false);
+
+    private async Task<JoinResultDto> CreateRoomCoreAsync(
+        string connectionId,
+        string playerName,
+        string clientId,
+        string? roomCode)
     {
         var nameError = GameEngine.ValidatePlayerName(playerName);
         if (nameError is not null)
@@ -31,7 +45,19 @@ public sealed class GameService(
         }
 
         var name = playerName.Trim();
-        var room = rooms.CreateRoom(connectionId, name, clientId);
+        Room room;
+        if (roomCode is null)
+        {
+            room = rooms.CreateRoom(connectionId, name, clientId);
+        }
+        else
+        {
+            if (!rooms.TryCreateRoomWithCode(connectionId, name, clientId, roomCode, out room, out var codeError))
+            {
+                return FailedJoin(codeError ?? "房间码无效");
+            }
+        }
+
         var state = CreateSnapshot(room, _clock.GetUtcNow().UtcDateTime);
         return new JoinResultDto(true, room.RoomId, room.Players[0].Id, state, null);
     }
