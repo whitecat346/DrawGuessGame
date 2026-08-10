@@ -1,6 +1,7 @@
 package com.drawguess.game.ui
 
 import android.content.ClipData
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -81,8 +82,9 @@ fun WaitingScreen(state: GameUiState, viewModel: GameViewModel) {
                 if (parsed.words.isEmpty()) {
                     importInfo = "词库中没有可用词汇"
                 } else {
+                    val name = queryDisplayName(context.contentResolver, uri)
                     viewModel.setWordBank(parsed.words)
-                    importInfo = "已导入 ${parsed.words.size} 个词" +
+                    importInfo = "已导入 ${parsed.words.size} 个词（$name）" +
                         if (parsed.skippedLines > 0) "，跳过 ${parsed.skippedLines} 行" else ""
                 }
             } catch (e: Exception) {
@@ -315,6 +317,16 @@ fun WaitingScreen(state: GameUiState, viewModel: GameViewModel) {
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+private fun queryDisplayName(resolver: android.content.ContentResolver, uri: android.net.Uri): String {
+    return try {
+        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) ?: "" else ""
+        } ?: ""
+    } catch (_: Exception) {
+        ""
     }
 }
 

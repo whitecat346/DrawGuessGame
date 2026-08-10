@@ -15,5 +15,11 @@ data class Tool(
     val size: Int = 8
 )
 
+data class CanvasViewport(
+    val zoom: Float = 1f,
+    val panX: Float = 0f,
+    val panY: Float = 0f
+)
+
 val DRAW_COLORS = listOf("#000000", "#ff006e", "#ccff00", "#00d9ff", "#ff9500", "#ffffff")
 val DRAW_SIZES = listOf(3, 8, 15, 30)

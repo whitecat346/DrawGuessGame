@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,6 +60,7 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
     val room = state.room ?: return
     val isPainter = room.currentDrawerId == state.playerId
     val roundActive = room.state == "RoundActive"
+    val bottomPanelHeight = if (isPainter) 120.dp else 220.dp
     var tab by remember { mutableStateOf(GameTab.Chat) }
     var input by remember { mutableStateOf("") }
     val tool = remember { mutableStateOf(Tool()) }
@@ -281,15 +283,34 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
                 .fillMaxWidth()
                 .weight(1f)
                 .border(3.dp, Ink)
-                .padding(4.dp)
+                .padding(4.dp),
+            contentAlignment = Alignment.Center
         ) {
-            DrawingCanvas(
-                strokes = strokeList,
-                interactive = isPainter && roundActive,
-                tool = tool.value,
-                onAction = viewModel::onDrawAction,
-                modifier = Modifier.fillMaxSize()
-            )
+            if (isPainter) {
+                // 画师模式：画布保持正方形（消息栏已压缩，尽量占满可用空间）
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val side = minOf(maxWidth, maxHeight)
+                    DrawingCanvas(
+                        strokes = strokeList,
+                        interactive = isPainter && roundActive,
+                        tool = tool.value,
+                        viewport = viewModel.canvasViewport,
+                        onViewportChange = viewModel::updateCanvasViewport,
+                        onAction = viewModel::onDrawAction,
+                        modifier = Modifier.size(side)
+                    )
+                }
+            } else {
+                DrawingCanvas(
+                    strokes = strokeList,
+                    interactive = isPainter && roundActive,
+                    tool = tool.value,
+                    viewport = viewModel.canvasViewport,
+                    onViewportChange = viewModel::updateCanvasViewport,
+                    onAction = viewModel::onDrawAction,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
 
         Row(
@@ -306,7 +327,7 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp)
+                .height(bottomPanelHeight)
                 .border(2.dp, Ink)
                 .background(Color.White)
         ) {

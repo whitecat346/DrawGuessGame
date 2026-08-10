@@ -9,6 +9,12 @@ interface Stroke {
   points: { x: number; y: number }[];
 }
 
+interface PinchState {
+  startDist: number;
+  startZoom: number;
+  lastCentroid: { x: number; y: number };
+}
+
 export interface CanvasHandles {
   draw: (action: DrawAction) => void;
   clear: () => void;
@@ -23,6 +29,9 @@ interface DrawingCanvasProps {
   registerCanvasHandlers: (handlers: CanvasHandles) => void;
   tool: { color: string; size: number };
 }
+
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 5;
 
 export function DrawingCanvas({
   active,
@@ -40,6 +49,11 @@ export function DrawingCanvas({
   const toolRef = useRef(tool);
   toolRef.current = tool;
   const frameRef = useRef<number | null>(null);
+  const zoomRef = useRef(1);
+  const panRef = useRef({ x: 0, y: 0 });
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchRef = useRef<PinchState | null>(null);
+
   const getLastStrokeId = useCallback(() => {
     const order = orderRef.current;
     for (let i = order.length - 1; i >= 0; i--) {
@@ -67,6 +81,13 @@ export function DrawingCanvas({
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
 
+    const zoom = zoomRef.current;
+    const pan = panRef.current;
+    ctx.save();
+    ctx.translate(width / 2 + pan.x, height / 2 + pan.y);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-width / 2, -height / 2);
+
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     for (const id of orderRef.current) {
@@ -88,6 +109,7 @@ export function DrawingCanvas({
       }
       ctx.stroke();
     }
+    ctx.restore();
   }, []);
 
   const scheduleRedraw = useCallback(() => {
@@ -108,11 +130,80 @@ export function DrawingCanvas({
     };
   }, []);
 
+  const distance = useCallback((a: { x: number; y: number }, b: { x: number; y: number }) => {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }, []);
+
+  const centroid = useCallback((points: { x: number; y: number }[]) => {
+    const sum = points.reduce(
+      (acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }),
+      { x: 0, y: 0 },
+    );
+    return { x: sum.x / points.length, y: sum.y / points.length };
+  }, []);
+
+  const applyZoomAt = useCallback(
+    (factor: number, anchor: { x: number; y: number }) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoomRef.current * factor));
+      if (next === zoomRef.current) return;
+      const ratio = next / zoomRef.current;
+      const cx = anchor.x - rect.left;
+      const cy = anchor.y - rect.top;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      panRef.current = {
+        x: (cx - centerX) * (1 - ratio) + panRef.current.x * ratio,
+        y: (cy - centerY) * (1 - ratio) + panRef.current.y * ratio,
+      };
+      zoomRef.current = next;
+      redraw();
+    },
+    [redraw],
+  );
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+      applyZoomAt(event.deltaY < 0 ? 1.1 : 1 / 1.1, { x: event.clientX, y: event.clientY });
+    };
+
     const onPointerDown = (event: PointerEvent) => {
+      const local = { x: event.clientX, y: event.clientY };
+      pointersRef.current.set(event.pointerId, local);
+
+      if (pointersRef.current.size >= 2) {
+        // 第二根手指落下：结束当前笔画，进入双指缩放
+        if (currentRef.current) {
+          sendDrawAction({
+            type: "end",
+            strokeId: currentRef.current.id,
+            x: 0,
+            y: 0,
+            color: currentRef.current.color,
+            size: currentRef.current.size,
+            aspect: currentRef.current.aspect,
+          });
+        }
+        drawingRef.current = false;
+        currentRef.current = null;
+        const points = [...pointersRef.current.values()];
+        pinchRef.current = {
+          startDist: distance(points[0], points[1]),
+          startZoom: zoomRef.current,
+          lastCentroid: centroid(points),
+        };
+        return;
+      }
+
       if (!active || !isPainter) return;
       event.preventDefault();
       canvas.setPointerCapture(event.pointerId);
@@ -135,6 +226,36 @@ export function DrawingCanvas({
     };
 
     const onPointerMove = (event: PointerEvent) => {
+      const local = { x: event.clientX, y: event.clientY };
+      if (pointersRef.current.has(event.pointerId)) {
+        pointersRef.current.set(event.pointerId, local);
+      }
+
+      if (pointersRef.current.size >= 2) {
+        event.preventDefault();
+        const points = [...pointersRef.current.values()];
+        const pinch = pinchRef.current;
+        if (pinch) {
+          const rect = canvas.getBoundingClientRect();
+          const width = rect.width;
+          const height = rect.height;
+          const dist = distance(points[0], points[1]);
+          const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, pinch.startZoom * (dist / pinch.startDist)));
+          const c = centroid(points);
+          const ratio = nextZoom / zoomRef.current;
+          const centerX = width / 2;
+          const centerY = height / 2;
+          panRef.current = {
+            x: (c.x - rect.left - centerX) * (1 - ratio) + panRef.current.x * ratio + (c.x - pinch.lastCentroid.x),
+            y: (c.y - rect.top - centerY) * (1 - ratio) + panRef.current.y * ratio + (c.y - pinch.lastCentroid.y),
+          };
+          pinch.lastCentroid = c;
+          zoomRef.current = nextZoom;
+          redraw();
+        }
+        return;
+      }
+
       if (!drawingRef.current || !currentRef.current) return;
       event.preventDefault();
       const point = toNormalized(event);
@@ -146,7 +267,11 @@ export function DrawingCanvas({
       scheduleRedraw();
     };
 
-    const endStroke = (event: PointerEvent) => {
+    const endPointer = (event: PointerEvent) => {
+      pointersRef.current.delete(event.pointerId);
+      if (pointersRef.current.size < 2) {
+        pinchRef.current = null;
+      }
       if (!drawingRef.current || !currentRef.current) return;
       event.preventDefault();
       drawingRef.current = false;
@@ -154,10 +279,11 @@ export function DrawingCanvas({
       currentRef.current = null;
     };
 
+    canvas.addEventListener("wheel", onWheel, { passive: false });
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
-    canvas.addEventListener("pointerup", endStroke);
-    canvas.addEventListener("pointercancel", endStroke);
+    canvas.addEventListener("pointerup", endPointer);
+    canvas.addEventListener("pointercancel", endPointer);
 
     const resizeObserver = new ResizeObserver(() => redraw());
     // 观察 canvas 自身：CSS 尺寸（w-full h-full）随容器变化时同步缓冲；
@@ -165,14 +291,15 @@ export function DrawingCanvas({
     resizeObserver.observe(canvas);
 
     return () => {
+      canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
-      canvas.removeEventListener("pointerup", endStroke);
-      canvas.removeEventListener("pointercancel", endStroke);
+      canvas.removeEventListener("pointerup", endPointer);
+      canvas.removeEventListener("pointercancel", endPointer);
       resizeObserver.disconnect();
       if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     };
-  }, [active, isPainter, redraw, scheduleRedraw, sendDrawAction, toNormalized]);
+  }, [active, isPainter, redraw, scheduleRedraw, sendDrawAction, toNormalized, applyZoomAt, distance, centroid]);
 
   useEffect(() => {
     const handlers: CanvasHandles = {
@@ -193,6 +320,9 @@ export function DrawingCanvas({
       clear() {
         strokesRef.current.clear();
         orderRef.current = [];
+        // 新回合/清空画布：缩放和平移回归默认
+        zoomRef.current = 1;
+        panRef.current = { x: 0, y: 0 };
         scheduleRedraw();
       },
       undo(strokeId) {

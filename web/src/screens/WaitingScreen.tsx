@@ -78,7 +78,9 @@ export function WaitingScreen({ state, api, dispatch }: WaitingScreenProps) {
       return;
     }
     await api.setWordBank(parsed.words);
-    setImportInfo(`已导入 ${parsed.words.length} 个词${parsed.skippedLines > 0 ? `，跳过 ${parsed.skippedLines} 行` : ""}`);
+    setImportInfo(
+      `已导入 ${parsed.words.length} 个词（${file.name}）${parsed.skippedLines > 0 ? `，跳过 ${parsed.skippedLines} 行` : ""}`,
+    );
   };
 
   const vote = (targetId: string) => {
