@@ -58,6 +58,9 @@ export function DrawingCanvas({
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
     }
+    // 明确设置 CSS 尺寸，避免 Android 上 canvas 缓冲与布局尺寸不一致导致拉伸
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;

@@ -116,7 +116,7 @@ export function GameScreen({ state, api, dispatch }: GameScreenProps) {
               <div className="font-mono text-sm md:text-base">
                 你的词：<span className="font-black text-lg md:text-2xl">{state.word?.word ?? "…"}</span>
                 {state.word && (
-                  <span className="text-gray-700 text-xs md:text-sm ml-2">
+                  <span className="text-neutral-800 text-xs md:text-sm ml-2">
                     {state.word.aliases.length > 0 ? `（别名：${state.word.aliases.join(" / ")}）` : ""}
                   </span>
                 )}
@@ -232,6 +232,7 @@ export function GameScreen({ state, api, dispatch }: GameScreenProps) {
 
 function ChatPanel({ state, api }: { state: GameClientState; api: GameApi }) {
   const listRef = useRef<HTMLDivElement>(null);
+  const wrongTimerRef = useRef<number | null>(null);
   const isPainter = state.room?.currentDrawerId === state.playerId;
   const roundActive = state.room?.state === "RoundActive";
   const [text, setText] = useState("");
@@ -241,10 +242,26 @@ function ChatPanel({ state, api }: { state: GameClientState; api: GameApi }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [state.messages.length]);
 
+  useEffect(() => {
+    const last = state.messages[state.messages.length - 1];
+    if (last?.kind === "correct" && wrongTimerRef.current !== null) {
+      clearTimeout(wrongTimerRef.current);
+      wrongTimerRef.current = null;
+    }
+  }, [state.messages]);
+
   const send = () => {
     const value = text.trim();
     if (!value) return;
     if (state.soundEnabled) sounds.click();
+    // 猜词（非画师且在回合中）：1.5 秒内未收到 correct 则播放答错音效
+    if (!isPainter && roundActive) {
+      if (wrongTimerRef.current !== null) clearTimeout(wrongTimerRef.current);
+      wrongTimerRef.current = window.setTimeout(() => {
+        wrongTimerRef.current = null;
+        if (state.soundEnabled) sounds.wrong();
+      }, 1500);
+    }
     void api.sendChat(value);
     setText("");
   };
@@ -253,7 +270,7 @@ function ChatPanel({ state, api }: { state: GameClientState; api: GameApi }) {
     <div className="flex-1 min-h-0 flex flex-col border-2 md:border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
       <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-2 md:p-3 space-y-1.5 font-mono text-sm">
         {state.messages.length === 0 && (
-          <p className="text-gray-700 text-xs">猜中答案会高亮显示，聊天消息所有人可见。</p>
+          <p className="text-neutral-800 text-xs">猜中答案会高亮显示，聊天消息所有人可见。</p>
         )}
         {state.messages.map((message) => (
           <MessageItem key={message.id} message={message} />
@@ -279,7 +296,7 @@ function ChatPanel({ state, api }: { state: GameClientState; api: GameApi }) {
 function MessageItem({ message }: { message: ChatMessage }) {
   switch (message.kind) {
     case "system":
-      return <p className="text-gray-700 text-xs">〔系统〕{message.text}</p>;
+      return <p className="text-neutral-800 text-xs">〔系统〕{message.text}</p>;
     case "hint":
       return (
         <p className="bg-[#00d9ff] border-2 border-black px-2 py-1">

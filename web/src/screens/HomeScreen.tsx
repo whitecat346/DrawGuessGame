@@ -115,7 +115,7 @@ export function HomeScreen({ state, api, dispatch }: HomeScreenProps) {
         </div>
       </Card>
 
-      <p className="font-mono text-xs md:text-sm text-gray-700 text-center max-w-md">
+      <p className="font-mono text-xs md:text-sm text-neutral-800 text-center max-w-md">
         房主在等待界面导入 TXT 词库（一行一词，/ 分隔别名），
         设置轮数与时间后即可开局。
       </p>

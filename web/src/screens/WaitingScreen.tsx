@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Dispatch } from "react";
 import { sounds } from "../audio/sounds";
 import { Button, Card, Input, NeoSection } from "../components/ui";
@@ -18,6 +18,42 @@ export function WaitingScreen({ state, api, dispatch }: WaitingScreenProps) {
   const isHost = me?.isHost ?? false;
   const fileRef = useRef<HTMLInputElement>(null);
   const [importInfo, setImportInfo] = useState<string | null>(null);
+  const [roundsDraft, setRoundsDraft] = useState(() => String(room?.settings.totalRounds ?? 3));
+  const [durationDraft, setDurationDraft] = useState(() => String(room?.settings.roundDurationSeconds ?? 60));
+
+  const roundsValue = Number(roundsDraft);
+  const durationValue = Number(durationDraft);
+  const roundsValid = Number.isInteger(roundsValue) && roundsValue >= 1 && roundsValue <= 20;
+  const durationValid = Number.isInteger(durationValue) && durationValue >= 15 && durationValue <= 300;
+
+  // 服务器设置变化时同步输入框（避免覆盖正在编辑的草稿：仅在值一致时静默，不一致时保持用户输入）
+  useEffect(() => {
+    const currentRoom = room;
+    if (!currentRoom) return;
+    setRoundsDraft(String(currentRoom.settings.totalRounds));
+    setDurationDraft(String(currentRoom.settings.roundDurationSeconds));
+  }, [room, room?.settings.totalRounds, room?.settings.roundDurationSeconds]);
+
+  // 输入合法后自动同步到房间（防抖 400ms）
+  useEffect(() => {
+    const currentRoom = room;
+    if (!currentRoom) return;
+    if (!roundsValid || roundsValue === currentRoom.settings.totalRounds) return;
+    const timer = setTimeout(() => {
+      void api.updateSettings({ ...currentRoom.settings, totalRounds: roundsValue });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [roundsValue, roundsValid, room, room?.settings, api]);
+
+  useEffect(() => {
+    const currentRoom = room;
+    if (!currentRoom) return;
+    if (!durationValid || durationValue === currentRoom.settings.roundDurationSeconds) return;
+    const timer = setTimeout(() => {
+      void api.updateSettings({ ...currentRoom.settings, roundDurationSeconds: durationValue });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [durationValue, durationValid, room, room?.settings, api]);
 
   if (!room) return null;
   const play = () => {
@@ -54,7 +90,7 @@ export function WaitingScreen({ state, api, dispatch }: WaitingScreenProps) {
     <div className="flex flex-col gap-4 p-3 md:p-6 max-w-5xl mx-auto w-full">
       <Card className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
         <div>
-          <div className="font-mono text-xs md:text-sm text-gray-700">房间码</div>
+          <div className="font-mono text-xs md:text-sm text-neutral-800">房间码</div>
           <div className="font-black tracking-[0.3em] text-2xl md:text-4xl">{room.roomId}</div>
         </div>
         <div className="flex gap-2">
@@ -142,26 +178,23 @@ export function WaitingScreen({ state, api, dispatch }: WaitingScreenProps) {
                   <span className="font-mono text-xs">总轮数</span>
                   <Input
                     type="number"
-                    min={1}
-                    max={20}
-                    value={room.settings.totalRounds}
-                    onChange={(e) =>
-                      void api.updateSettings({ ...room.settings, totalRounds: Number(e.target.value) || 1 })
-                    }
+                    value={roundsDraft}
+                    onChange={(e) => setRoundsDraft(e.target.value)}
                   />
+                  {!roundsValid && (
+                    <p className="font-mono text-xs text-[#ff006e] font-bold">总轮数需在 1-20 之间</p>
+                  )}
                 </label>
                 <label className="space-y-1">
                   <span className="font-mono text-xs">每轮时间（秒）</span>
                   <Input
                     type="number"
-                    min={15}
-                    max={300}
-                    step={5}
-                    value={room.settings.roundDurationSeconds}
-                    onChange={(e) =>
-                      void api.updateSettings({ ...room.settings, roundDurationSeconds: Number(e.target.value) || 60 })
-                    }
+                    value={durationDraft}
+                    onChange={(e) => setDurationDraft(e.target.value)}
                   />
+                  {!durationValid && (
+                    <p className="font-mono text-xs text-[#ff006e] font-bold">每轮时间需在 15-300 秒之间</p>
+                  )}
                 </label>
               </div>
             ) : (
@@ -194,8 +227,8 @@ export function WaitingScreen({ state, api, dispatch }: WaitingScreenProps) {
                 }}>
                   导入 TXT 词库
                 </Button>
-                {importInfo && <p className="font-mono text-xs text-gray-700">{importInfo}</p>}
-                <p className="font-mono text-xs text-gray-700">
+                {importInfo && <p className="font-mono text-xs text-neutral-800">{importInfo}</p>}
+                <p className="font-mono text-xs text-neutral-800">
                   格式：一行一个词，用 / 分隔别名；# 开头为注释。
                 </p>
               </div>
@@ -208,7 +241,7 @@ export function WaitingScreen({ state, api, dispatch }: WaitingScreenProps) {
             <Button
               variant="primary"
               className="w-full py-3 text-lg"
-              disabled={room.players.length < 2 || room.wordCount === 0}
+              disabled={room.players.length < 2 || room.wordCount === 0 || !roundsValid || !durationValid}
               onClick={() => {
                 play();
                 void api.startGame();

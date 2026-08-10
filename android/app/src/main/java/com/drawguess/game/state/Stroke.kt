@@ -6,7 +6,7 @@ data class Stroke(
     val id: String,
     val color: String,
     val size: Int,
-    val points: MutableList<Point>
+    val points: List<Point>
 )
 
 data class Tool(
