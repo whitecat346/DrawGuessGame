@@ -40,15 +40,15 @@ export function useGameConnection(dispatch: (action: GameAction) => void) {
         .configureLogging(signalR.LogLevel.Warning)
         .build();
 
-      connection.on("gameStateUpdated", (room: GameStateSnapshot) => dispatch({ type: "state", room }));
-      connection.on("wordAssigned", (word: string, aliases: string[]) => dispatch({ type: "word", word, aliases }));
-      connection.on("chatReceived", (message: ChatMessage) => dispatch({ type: "chat", message }));
-      connection.on("kicked", (reason: string) => dispatch({ type: "kicked", reason }));
-      connection.on("error", (message: string) => dispatch({ type: "error", message }));
+      connection.on("GameStateUpdatedAsync", (room: GameStateSnapshot) => dispatch({ type: "state", room }));
+      connection.on("WordAssignedAsync", (word: string, aliases: string[]) => dispatch({ type: "word", word, aliases }));
+      connection.on("ChatReceivedAsync", (message: ChatMessage) => dispatch({ type: "chat", message }));
+      connection.on("KickedAsync", (reason: string) => dispatch({ type: "kicked", reason }));
+      connection.on("ErrorAsync", (message: string) => dispatch({ type: "error", message }));
 
-      connection.on("drawActionReceived", (action: DrawAction) => canvasHandlersRef.current?.draw(action));
-      connection.on("canvasCleared", () => canvasHandlersRef.current?.clear());
-      connection.on("strokeUndone", (strokeId: string) => canvasHandlersRef.current?.undo(strokeId));
+      connection.on("DrawActionReceivedAsync", (action: DrawAction) => canvasHandlersRef.current?.draw(action));
+      connection.on("CanvasClearedAsync", () => canvasHandlersRef.current?.clear());
+      connection.on("StrokeUndoneAsync", (strokeId: string) => canvasHandlersRef.current?.undo(strokeId));
 
       connection.onreconnecting(() => setConnectionState("reconnecting"));
       connection.onreconnected(() => setConnectionState("connected"));
@@ -86,20 +86,20 @@ export function useGameConnection(dispatch: (action: GameAction) => void) {
       localStorage.setItem("dg.nickname", name);
     },
     createRoom: () =>
-      invoke<JoinResult>("createRoom", identityRef.current.nickname, identityRef.current.clientId),
+      invoke<JoinResult>("CreateRoomAsync", identityRef.current.nickname, identityRef.current.clientId),
     joinRoom: (roomId: string) =>
-      invoke<JoinResult>("joinRoom", roomId.trim().toUpperCase(), identityRef.current.nickname, identityRef.current.clientId),
-    leaveRoom: () => invoke("leaveRoom"),
-    updateSettings: (settings: RoomSettings) => invoke("updateSettings", settings),
-    setWordBank: (words: WordEntry[]) => invoke("setWordBank", words),
-    startGame: () => invoke("startGame"),
-    restartGame: () => invoke("restartGame"),
-    sendChat: (text: string) => invoke("sendChat", text),
-    sendHint: (text: string) => invoke("sendHint", text),
-    sendDrawAction: (action: DrawAction) => invoke("sendDrawAction", action),
-    clearCanvas: () => invoke("clearCanvas"),
-    undoStroke: (strokeId: string) => invoke("undoStroke", strokeId),
-    voteKick: (targetPlayerId: string) => invoke("voteKick", targetPlayerId),
+      invoke<JoinResult>("JoinRoomAsync", roomId.trim().toUpperCase(), identityRef.current.nickname, identityRef.current.clientId),
+    leaveRoom: () => invoke("LeaveRoomAsync"),
+    updateSettings: (settings: RoomSettings) => invoke("UpdateSettingsAsync", settings),
+    setWordBank: (words: WordEntry[]) => invoke("SetWordBankAsync", words),
+    startGame: () => invoke("StartGameAsync"),
+    restartGame: () => invoke("RestartGameAsync"),
+    sendChat: (text: string) => invoke("SendChatAsync", text),
+    sendHint: (text: string) => invoke("SendHintAsync", text),
+    sendDrawAction: (action: DrawAction) => invoke("SendDrawActionAsync", action),
+    clearCanvas: () => invoke("ClearCanvasAsync"),
+    undoStroke: (strokeId: string) => invoke("UndoStrokeAsync", strokeId),
+    voteKick: (targetPlayerId: string) => invoke("VoteKickAsync", targetPlayerId),
   };
 
   return { connect, api };

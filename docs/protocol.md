@@ -2,39 +2,39 @@
 
 Hub 地址：`/gamehub`（开发环境：`http://localhost:5197/gamehub`）。
 
-所有方法名遵循 SignalR 规则：C# 方法 `CreateRoomAsync` 在客户端调用为 `createRoom`；服务端事件 `GameStateUpdatedAsync` 在客户端监听为 `gameStateUpdated`。DTO 序列化为 camelCase。
+> 重要：当前 .NET 10 运行时对 SignalR 方法名做**精确匹配**（区分大小写，且不剥离 Async 后缀）。客户端调用与事件监听必须使用下文表格中的**精确名称**。DTO 序列化为 camelCase。
 
 ## 客户端调用（invoke）
 
 | 方法 | 参数 | 返回 |
 | --- | --- | --- |
-| `createRoom` | `playerName: string`, `clientId: string` | `JoinResult` |
-| `joinRoom` | `roomId: string`, `playerName: string`, `clientId: string` | `JoinResult` |
-| `getState` | 无 | `GameStateSnapshot \| null` |
-| `leaveRoom` | 无 | 无 |
-| `updateSettings` | `RoomSettings` | 无 |
-| `setWordBank` | `WordEntry[]` | 无 |
-| `startGame` | 无 | 无 |
-| `restartGame` | 无 | 无 |
-| `sendChat` | `text: string` | 无 |
-| `sendHint` | `text: string` | 无 |
-| `sendDrawAction` | `DrawAction` | 无 |
-| `clearCanvas` | 无 | 无 |
-| `undoStroke` | `strokeId: string` | 无 |
-| `voteKick` | `targetPlayerId: string` | 无 |
+| `CreateRoomAsync` | `playerName: string`, `clientId: string` | `JoinResult` |
+| `JoinRoomAsync` | `roomId: string`, `playerName: string`, `clientId: string` | `JoinResult` |
+| `GetStateAsync` | 无 | `GameStateSnapshot \| null` |
+| `LeaveRoomAsync` | 无 | 无 |
+| `UpdateSettingsAsync` | `RoomSettings` | 无 |
+| `SetWordBankAsync` | `WordEntry[]` | 无 |
+| `StartGameAsync` | 无 | 无 |
+| `RestartGameAsync` | 无 | 无 |
+| `SendChatAsync` | `text: string` | 无 |
+| `SendHintAsync` | `text: string` | 无 |
+| `SendDrawActionAsync` | `DrawAction` | 无 |
+| `ClearCanvasAsync` | 无 | 无 |
+| `UndoStrokeAsync` | `strokeId: string` | 无 |
+| `VoteKickAsync` | `targetPlayerId: string` | 无 |
 
 ## 服务端事件（on）
 
 | 事件 | 参数 | 说明 |
 | --- | --- | --- |
-| `gameStateUpdated` | `GameStateSnapshot` | 房间状态（秒级推送） |
-| `wordAssigned` | `word: string`, `aliases: string[]` | 仅发送给当前画师 |
-| `chatReceived` | `ChatMessage` | 聊天/提示/系统/答对消息 |
-| `drawActionReceived` | `DrawAction` | 画布笔刷事件（发送给除画师外的玩家） |
-| `canvasCleared` | 无 | 新回合/清空画布 |
-| `strokeUndone` | `strokeId: string` | 撤销指定笔画 |
-| `kicked` | `reason: string` | 被投票移出 |
-| `error` | `message: string` | 操作被拒绝的原因 |
+| `GameStateUpdatedAsync` | `GameStateSnapshot` | 房间状态（秒级推送） |
+| `WordAssignedAsync` | `word: string`, `aliases: string[]` | 仅发送给当前画师 |
+| `ChatReceivedAsync` | `ChatMessage` | 聊天/提示/系统/答对消息 |
+| `DrawActionReceivedAsync` | `DrawAction` | 画布笔刷事件（发送给除画师外的玩家） |
+| `CanvasClearedAsync` | 无 | 新回合/清空画布 |
+| `StrokeUndoneAsync` | `strokeId: string` | 撤销指定笔画 |
+| `KickedAsync` | `reason: string` | 被投票移出 |
+| `ErrorAsync` | `message: string` | 操作被拒绝的原因 |
 
 ## 主要 DTO
 
