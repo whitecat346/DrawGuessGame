@@ -35,6 +35,16 @@ cd android
 
 APK 输出：`android/app/build/outputs/apk/debug/app-debug.apk`。
 
+### Release APK
+
+```powershell
+.\gradlew.bat :app:assembleRelease
+```
+
+输出：`android/app/build/outputs/apk/release/app-release.apk`。
+
+Release 使用专用签名（`android/keystore/release.jks` + `android/keystore.properties`，两者均不入库；换机器后需重新生成或恢复这两个文件）。若缺少签名文件，构建会自动回退到 debug 签名，便于开发环境继续构建。
+
 ## 连接服务器
 
 - **模拟器**：应用默认服务器地址为 `http://10.0.2.2:5197/gamehub`，对应宿主机 `http://localhost:5197`，开箱即用。
@@ -45,6 +55,7 @@ dotnet artifacts/server/DrawGuess.Server.dll --urls http://0.0.0.0:5197
 ```
 
 - MVP 阶段 Manifest 开启了 `usesCleartextTraffic`，仅用于开发环境；生产部署应改为 HTTPS。
+- **局域网测试**：服务端以 `0.0.0.0:5197` 运行（`deploy/run-lan.ps1`）后，应用内填写 `http://<电脑局域网IP>:5197/gamehub`；Windows 防火墙需放行 5197 端口（管理员执行 `New-NetFirewallRule -DisplayName "DrawGuess 5197" -Direction Inbound -Protocol TCP -LocalPort 5197 -Action Allow`）。
 
 ## 自动化端到端测试
 

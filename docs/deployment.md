@@ -54,6 +54,29 @@ Copy-Item web/dist artifacts/server/wwwroot -Recurse
 dotnet artifacts/server/DrawGuess.Server.dll --urls http://localhost:5197
 ```
 
+## 局域网测试（手机/其他设备访问）
+
+服务端默认配置已监听 `http://0.0.0.0:5197`（见 `appsettings.json` 的 `Urls`），同一局域网内的手机可直接访问。
+
+```powershell
+.\deploy\run-lan.ps1
+```
+
+脚本会构建前端、发布服务端、以 0.0.0.0 启动并打印本机 IPv4 地址。
+
+首次运行需要放行 Windows 防火墙（**以管理员身份**执行一次）：
+
+```powershell
+New-NetFirewallRule -DisplayName "DrawGuess 5197" -Direction Inbound -Protocol TCP -LocalPort 5197 -Action Allow -Profile Private
+```
+
+手机端地址：
+
+- Web：`http://<电脑局域网IP>:5197`
+- Android 应用内服务器地址：`http://<电脑局域网IP>:5197/gamehub`
+
+> 提示：`run-local.ps1` 仍以 `--urls http://localhost:5197` 启动，只允许本机访问；需要局域网时使用 `run-lan.ps1` 或手动传 `--urls http://0.0.0.0:5197`。
+
 ## 开发模式
 
 终端一：启动服务端

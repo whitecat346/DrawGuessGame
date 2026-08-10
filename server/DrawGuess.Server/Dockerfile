@@ -24,4 +24,4 @@ WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:8080
 COPY --from=build /out ./
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "DrawGuess.Server.dll"]
+ENTRYPOINT ["dotnet", "DrawGuess.Server.dll", "--urls", "http://+:8080"]
