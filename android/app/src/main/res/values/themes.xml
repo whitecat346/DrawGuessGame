@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.DrawGuess" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F4F1EA</item>
+        <item name="android:statusBarColor">#F4F1EA</item>
+        <item name="android:navigationBarColor">#F4F1EA</item>
+    </style>
+</resources>

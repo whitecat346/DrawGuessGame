@@ -1,0 +1,41 @@
+# 示例词库（一行一个词，/ 分隔别名，# 开头为注释）
+苹果/apple
+香蕉/banana
+月亮/moon
+太阳/sun
+星星/star
+房子/house
+汽车/car
+飞机/plane
+轮船/ship
+火车/train
+自行车/bike
+手机/phone
+电脑/computer
+书本/book
+铅笔/pencil
+雨伞/umbrella
+帽子/hat
+眼镜/glasses
+鞋子/shoes
+蛋糕/cake
+冰淇淋/ice cream
+西瓜/watermelon
+柠檬/lemon
+葡萄/grape
+小猫/cat
+小狗/dog
+兔子/rabbit
+大象/elephant
+老虎/tiger
+熊猫/panda
+恐龙/dinosaur
+蝴蝶/butterfly
+蜜蜂/bee
+圣诞树/christmas tree
+彩虹/rainbow
+火山/volcano
+沙漠/desert
+森林/forest
+城堡/castle
+机器人/robot
