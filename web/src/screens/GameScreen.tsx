@@ -110,7 +110,7 @@ export function GameScreen({ state, api, dispatch }: GameScreenProps) {
       )}
 
       <div className="flex flex-1 min-h-0 flex-col md:flex-row gap-2 md:gap-4">
-        <div className="flex flex-1 min-h-0 flex-col gap-2">
+        <div className="flex flex-1 min-h-0 min-w-0 flex-col gap-2">
           <div className="border-2 md:border-4 border-black bg-white p-2 md:p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between gap-2">
             {isPainter ? (
               <div className="font-mono text-sm md:text-base">

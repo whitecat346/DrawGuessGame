@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@microsoft/signalr": "^10.0.11"
+    "@microsoft/signalr": "^10.0.11",
+    "puppeteer-core": "^25.5.0"
   }
 }
