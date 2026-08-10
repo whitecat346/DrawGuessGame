@@ -1,0 +1,13 @@
+services:
+  drawguess:
+    build:
+      context: ..
+      dockerfile: server/DrawGuess.Server/Dockerfile
+    image: drawguess:latest
+    container_name: drawguess
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      # 反向代理或同机直访时按需修改；同源部署时无需 CORS 配置。
+      ASPNETCORE_URLS: http://+:8080

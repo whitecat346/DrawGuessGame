@@ -29,9 +29,11 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors();
-app.MapGet("/", () => "DrawGuess Server Running");
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapHub<GameHub>("/gamehub");
+app.MapFallbackToFile("index.html");
 
 app.Run();
 

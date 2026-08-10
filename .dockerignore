@@ -1,0 +1,13 @@
+.git
+.gitignore
+artifacts/
+logs/
+data/
+docs/
+deploy/
+tests/
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+*.log
