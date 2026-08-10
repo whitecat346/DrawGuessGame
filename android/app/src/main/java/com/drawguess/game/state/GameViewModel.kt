@@ -16,6 +16,7 @@ import com.drawguess.game.net.GameEvent
 import com.drawguess.game.net.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -31,6 +32,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var client: GameClient? = null
     private var eventsJob: Job? = null
+    private var wrongSoundJob: Job? = null
     private var historyRecorded = false
 
     init {
@@ -186,6 +188,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return
         sounds.click()
+        val room = uiState.room
+        val isPainter = room?.currentDrawerId == uiState.playerId
+        val roundActive = room?.state == "RoundActive"
+        // 猜词（非画师且在回合中）：1.5 秒内未收到 correct 则播放答错音效
+        if (!isPainter && roundActive) {
+            wrongSoundJob?.cancel()
+            wrongSoundJob = viewModelScope.launch {
+                delay(1500)
+                sounds.wrong()
+            }
+        }
         viewModelScope.launch {
             try {
                 client?.sendChat(trimmed)
@@ -199,7 +212,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 client?.sendHint(text)
-                sounds.click()
+                sounds.hint()
             } catch (e: Exception) {
                 status("提示失败：${e.message}")
             }
@@ -228,13 +241,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             id = action.strokeId,
                             color = action.color,
                             size = action.size,
-                            points = mutableListOf(Point(action.x, action.y))
+                            points = listOf(Point(action.x, action.y))
                         )
                     )
                 }
             }
             "draw" -> {
-                strokes.find { it.id == action.strokeId }?.points?.add(Point(action.x, action.y))
+                val index = strokes.indexOfFirst { it.id == action.strokeId }
+                if (index >= 0) {
+                    strokes[index] = strokes[index].copy(points = strokes[index].points + Point(action.x, action.y))
+                }
             }
             "end" -> Unit
         }
@@ -283,13 +299,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                             id = action.strokeId,
                             color = action.color,
                             size = action.size,
-                            points = mutableListOf(Point(action.x, action.y))
+                            points = listOf(Point(action.x, action.y))
                         )
                     )
                 }
             }
             "draw" -> {
-                strokes.find { it.id == action.strokeId }?.points?.add(Point(action.x, action.y))
+                val index = strokes.indexOfFirst { it.id == action.strokeId }
+                if (index >= 0) {
+                    strokes[index] = strokes[index].copy(points = strokes[index].points + Point(action.x, action.y))
+                }
             }
             "end" -> Unit
         }
@@ -304,7 +323,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             is GameEvent.Chat -> {
                 uiState = uiState.copy(chatMessages = (uiState.chatMessages + event.message).takeLast(200))
                 when (event.message.kind) {
-                    "correct" -> sounds.correct()
+                    "correct" -> {
+                        wrongSoundJob?.cancel()
+                        wrongSoundJob = null
+                        sounds.correct()
+                    }
                     "system" -> Unit
                     else -> Unit
                 }
@@ -313,6 +336,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             GameEvent.CanvasCleared -> strokes.clear()
             is GameEvent.StrokeUndone -> strokes.removeAll { it.id == event.strokeId }
             is GameEvent.Kicked -> {
+                sounds.kick()
                 status("你已被移出：${event.reason}")
                 resetToHome()
             }
@@ -328,6 +352,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun applyRoom(room: Dtos.GameStateSnapshotDto) {
         val previous = uiState
+        val previousState = previous.room?.state
+        if ((room.state == "RoundEnding" || room.state == "GameOver") && previousState != room.state) {
+            sounds.roundEnd()
+        }
         val newScreen = when (room.state) {
             "GameOver" -> Screen.End
             "RoundActive", "RoundEnding" -> Screen.Game
@@ -413,6 +441,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun resetToHome(message: String? = null) {
+        wrongSoundJob?.cancel()
+        wrongSoundJob = null
         try {
             client?.disconnect()
         } catch (_: Exception) {
