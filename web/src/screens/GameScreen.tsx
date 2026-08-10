@@ -189,7 +189,7 @@ export function GameScreen({ state, api, dispatch }: GameScreenProps) {
             </div>
           )}
 
-          <div className="relative flex-1 min-h-0 border-2 md:border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <div className="relative flex-1 min-h-0 border-2 md:border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center overflow-hidden">
             <DrawingCanvas
               active={roundActive}
               isPainter={isPainter}

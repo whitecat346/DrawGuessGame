@@ -64,14 +64,23 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (next) sounds.click()
     }
 
-    fun createRoom() {
+    fun createRoom(customCode: String = "") {
         val name = uiState.nickname.trim()
         if (name.isEmpty()) {
             status("请输入昵称")
             return
         }
+        val code = customCode.trim().uppercase()
+        if (code.isNotEmpty() && !code.matches(Regex("[A-Z2-9]{6}"))) {
+            status("房间码需为 6 位字母数字（不含 0、1、I、O）")
+            return
+        }
         runWithConnection { c ->
-            val result = c.createRoom(name, settings.clientId)
+            val result = if (code.isEmpty()) {
+                c.createRoom(name, settings.clientId)
+            } else {
+                c.createRoomWithCode(name, settings.clientId, code)
+            }
             if (result.success) {
                 onJoinSuccess(result)
             } else {

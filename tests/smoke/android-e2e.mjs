@@ -41,6 +41,10 @@ function once(conn, event, predicate = () => true, timeoutMs = 30000) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const ROOM_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const customRoomCode = () =>
+  Array.from({ length: 6 }, () => ROOM_CHARS[Math.floor(Math.random() * ROOM_CHARS.length)]).join("");
+
 const q = (s) => `"${String(s).replace(/"/g, '\\"')}"`;
 
 function adb(...args) {
@@ -86,6 +90,7 @@ function canvasBounds(xml) {
 
 async function main() {
   console.log("Android 自驱动端到端：建房 → 加词库 → 开游戏 → 作画 → 猜词 → 结算");
+  let roomCode = "";
 
   adb("shell", "am", "force-stop", PKG);
   adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);
@@ -104,22 +109,36 @@ async function main() {
   await sleep(200);
   adb("shell", "input", "text", "TesterA");
   await sleep(500);
-  adb("shell", "input", "keyevent", "111"); // ESC 收起键盘
+  adb("shell", "input", "keyevent", "4"); // BACK 收起键盘
   await sleep(500);
 
   xml = uiDump();
-  const createBtn = boundsOf(xml, "创建房间");
-  check("找到创建房间按钮", !!createBtn);
-  if (!createBtn) return;
-  adb("shell", "input", "tap", String(Math.round(createBtn.x)), String(Math.round(createBtn.y)));
-  await sleep(4000);
+  const customCodeField = boundsOf(xml, "不填则随机生成");
+  check("找到自定义房间码输入框", !!customCodeField);
+  if (customCodeField) {
+    const customCode = customRoomCode();
+    adb("shell", "input", "tap", String(Math.round(customCodeField.x)), String(Math.round(customCodeField.y)));
+    await sleep(800);
+    adb("shell", "input", "text", customCode);
+    await sleep(500);
+    adb("shell", "input", "keyevent", "4"); // BACK 收起键盘
+    await sleep(500);
+    xml = uiDump();
+    const createBtn = boundsOf(xml, "创建房间");
+    check("找到创建房间按钮", !!createBtn);
+    if (!createBtn) return;
+    adb("shell", "input", "tap", String(Math.round(createBtn.x)), String(Math.round(createBtn.y)));
+    await sleep(4000);
 
-  xml = uiDump();
-  const roomMatch = xml.match(/text="([A-Z0-9]{6})"/);
-  check("创建房间成功并读取房间码", !!roomMatch, roomMatch?.[1] ?? "");
-  if (!roomMatch) return;
-  const roomCode = roomMatch[1];
-  console.log(`  房间码：${roomCode}`);
+    xml = uiDump();
+    const waitingShown = xml.includes("玩家（") && xml.includes(customCode);
+    check("创建房间成功且自定义房间码生效", waitingShown, `期望 ${customCode}`);
+    if (!waitingShown) return;
+    roomCode = customCode;
+    console.log(`  房间码：${roomCode}`);
+  } else {
+    return;
+  }
 
   const conn = new signalR.HubConnectionBuilder()
     .withUrl(HUB_URL)
@@ -197,6 +216,8 @@ async function main() {
     adb("shell", "input", "tap", String(Math.round(chatInput.x)), String(Math.round(chatInput.y)));
     await sleep(800);
     adb("shell", "input", "text", "androidhello");
+    await sleep(500);
+    adb("shell", "input", "keyevent", "4"); // BACK 收起键盘
     await sleep(500);
     const sendBtn = boundsOf(uiDump(), "发送");
     if (sendBtn) {

@@ -14,6 +14,7 @@ interface HomeScreenProps {
 export function HomeScreen({ state, api, dispatch }: HomeScreenProps) {
   const [nickname, setNickname] = useState(state.nickname);
   const [roomCode, setRoomCode] = useState("");
+  const [customCode, setCustomCode] = useState("");
   const [busy, setBusy] = useState(false);
 
   const play = () => {
@@ -32,8 +33,13 @@ export function HomeScreen({ state, api, dispatch }: HomeScreenProps) {
       dispatch({ type: "error", message: "请输入昵称" });
       return;
     }
+    const code = customCode.trim();
+    if (code && !/^[A-Z2-9]{6}$/.test(code)) {
+      dispatch({ type: "error", message: "房间码需为 6 位字母数字（不含 0、1、I、O）" });
+      return;
+    }
     setBusy(true);
-    const result = await api.createRoom();
+    const result = await api.createRoom(code || undefined);
     if (result) dispatch({ type: "joined", result });
     setBusy(false);
   };
@@ -79,16 +85,30 @@ export function HomeScreen({ state, api, dispatch }: HomeScreenProps) {
           />
         </div>
 
+        <div className="space-y-2">
+          <label className="font-black text-sm md:text-base block" htmlFor="customCode">
+            自定义房间码（可选）
+          </label>
+          <Input
+            id="customCode"
+            value={customCode}
+            maxLength={6}
+            placeholder="不填则随机生成 6 位房间码"
+            className="uppercase tracking-widest"
+            onChange={(e) => setCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button variant="primary" onClick={handleCreate} disabled={busy} className="w-full">
             创建房间
           </Button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 min-w-0">
             <Input
               value={roomCode}
               maxLength={6}
               placeholder="房间码"
-              className="flex-1 uppercase tracking-widest"
+              className="flex-1 min-w-0 uppercase tracking-widest"
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === "Enter" && handleJoin()}
             />

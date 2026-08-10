@@ -9,6 +9,7 @@ Hub 地址：`/gamehub`（开发环境：`http://localhost:5197/gamehub`）。
 | 方法 | 参数 | 返回 |
 | --- | --- | --- |
 | `CreateRoomAsync` | `playerName: string`, `clientId: string` | `JoinResult` |
+| `CreateRoomWithCodeAsync` | `playerName: string`, `clientId: string`, `roomCode: string` | `JoinResult` |
 | `JoinRoomAsync` | `roomId: string`, `playerName: string`, `clientId: string` | `JoinResult` |
 | `GetStateAsync` | 无 | `GameStateSnapshot \| null` |
 | `LeaveRoomAsync` | 无 | 无 |
@@ -37,6 +38,8 @@ Hub 地址：`/gamehub`（开发环境：`http://localhost:5197/gamehub`）。
 | `ErrorAsync` | `message: string` | 操作被拒绝的原因 |
 
 ## 主要 DTO
+
+自定义房间码规则：6 位，字符集 `A-Z`、`2-9`（不含 `0`、`1`、`I`、`O`，与随机生成的房间码一致），服务端校验唯一性。
 
 ```ts
 interface JoinResult {

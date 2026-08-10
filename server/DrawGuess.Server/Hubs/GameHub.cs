@@ -12,23 +12,31 @@ public sealed class GameHub(
     public async Task<JoinResultDto> CreateRoomAsync(string playerName, string clientId)
     {
         var result = await game.CreateRoomAsync(Context.ConnectionId, playerName, clientId).ConfigureAwait(false);
-        if (result.Success && result.RoomId is not null)
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, result.RoomId).ConfigureAwait(false);
-        }
+        await AddToRoomGroupAsync(result).ConfigureAwait(false);
+        return result;
+    }
 
+    public async Task<JoinResultDto> CreateRoomWithCodeAsync(string playerName, string clientId, string roomCode)
+    {
+        var result = await game.CreateRoomWithCodeAsync(Context.ConnectionId, playerName, clientId, roomCode)
+            .ConfigureAwait(false);
+        await AddToRoomGroupAsync(result).ConfigureAwait(false);
         return result;
     }
 
     public async Task<JoinResultDto> JoinRoomAsync(string roomId, string playerName, string clientId)
     {
         var result = await game.JoinRoomAsync(Context.ConnectionId, roomId, playerName, clientId).ConfigureAwait(false);
+        await AddToRoomGroupAsync(result).ConfigureAwait(false);
+        return result;
+    }
+
+    private async Task AddToRoomGroupAsync(JoinResultDto result)
+    {
         if (result.Success && result.RoomId is not null)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, result.RoomId).ConfigureAwait(false);
         }
-
-        return result;
     }
 
     public Task<GameStateSnapshotDto?> GetStateAsync()
