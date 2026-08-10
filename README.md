@@ -14,7 +14,7 @@
 - [x] 需求确认与项目骨架
 - [x] 服务端核心（SignalR 游戏引擎 + 31 个单元测试）
 - [x] Web 端 MVP（建房/加入/画画/猜词/计分/房主设置/投票踢人/词库导入）
-- [x] Android 端 MVP（Kotlin + Jetpack Compose，模拟器端到端验证通过；画布缩放/正方形画师画布）
+- [x] Android 端 MVP（Kotlin + Jetpack Compose，模拟器端到端验证通过；正方形画师画布）
 
 ## 目录结构
 

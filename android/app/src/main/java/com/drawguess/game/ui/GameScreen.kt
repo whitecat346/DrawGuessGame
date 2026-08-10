@@ -294,8 +294,6 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
                         strokes = strokeList,
                         interactive = isPainter && roundActive,
                         tool = tool.value,
-                        viewport = viewModel.canvasViewport,
-                        onViewportChange = viewModel::updateCanvasViewport,
                         onAction = viewModel::onDrawAction,
                         modifier = Modifier.size(side)
                     )
@@ -305,8 +303,6 @@ fun GameScreen(state: GameUiState, viewModel: GameViewModel) {
                     strokes = strokeList,
                     interactive = isPainter && roundActive,
                     tool = tool.value,
-                    viewport = viewModel.canvasViewport,
-                    onViewportChange = viewModel::updateCanvasViewport,
                     onAction = viewModel::onDrawAction,
                     modifier = Modifier.fillMaxSize()
                 )
