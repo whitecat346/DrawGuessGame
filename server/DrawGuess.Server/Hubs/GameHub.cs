@@ -6,7 +6,8 @@ namespace DrawGuess.Server.Hubs;
 
 public sealed class GameHub(
     RoomManager rooms,
-    GameService game) : Hub<IGameClient>
+    GameService game,
+    ILogger<GameHub> logger) : Hub<IGameClient>
 {
     public async Task<JoinResultDto> CreateRoomAsync(string playerName, string clientId)
     {
@@ -74,6 +75,9 @@ public sealed class GameHub(
 
     public async Task SendDrawActionAsync(DrawActionDto action)
     {
+        logger.LogDebug(
+            "DrawAction from {ConnectionId}: type={Type} stroke={StrokeId} point=({X},{Y}) color={Color} size={Size}",
+            Context.ConnectionId, action.Type, action.StrokeId, action.X, action.Y, action.Color, action.Size);
         await game.SendDrawActionAsync(Context.ConnectionId, action).ConfigureAwait(false);
     }
 

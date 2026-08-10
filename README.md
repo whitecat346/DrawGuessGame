@@ -14,16 +14,17 @@
 - [x] 需求确认与项目骨架
 - [x] 服务端核心（SignalR 游戏引擎 + 31 个单元测试）
 - [x] Web 端 MVP（建房/加入/画画/猜词/计分/房主设置/投票踢人/词库导入）
-- [ ] Android 端（第二阶段）
+- [x] Android 端 MVP（Kotlin + Jetpack Compose，模拟器端到端验证通过）
 
 ## 目录结构
 
 ```
 server/   ASP.NET Core 服务端（SignalR）
 web/      React Web 前端
-docs/     需求、规则、协议与部署文档
+android/  Kotlin + Jetpack Compose 原生客户端
+docs/     需求、规则、协议、部署与 Android 文档
 deploy/   Docker Compose 与部署脚本
-tests/    .NET 单元测试
+tests/    .NET 单元测试与端到端冒烟脚本
 ```
 
 ## 快速开始
@@ -53,6 +54,15 @@ cd deploy
 
 部署细节、反向代理与 HTTPS 建议见 [docs/deployment.md](docs/deployment.md)。
 
+### Android 客户端
+
+```powershell
+cd android
+.\gradlew.bat :app:assembleDebug
+```
+
+模拟器直接连接本机 `http://10.0.2.2:5197/gamehub`；真机与服务器同网段时在应用内填写电脑局域网 IP。详细说明见 [docs/android.md](docs/android.md)。
+
 ## 测试
 
 ```powershell
@@ -63,6 +73,9 @@ dotnet test DrawGuess.slnx
 cd tests/smoke
 pnpm install
 node smoke.mjs
+
+# Android 自驱动端到端（需 API 36 模拟器）
+node android-e2e.mjs
 ```
 
 需求、规则与协议文档见 [docs/](docs/)。
