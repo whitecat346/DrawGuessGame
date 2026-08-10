@@ -1,0 +1,8 @@
+{
+  "name": "drawguess-smoke",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@microsoft/signalr": "^10.0.11"
+  }
+}

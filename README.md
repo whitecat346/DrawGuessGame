@@ -12,8 +12,8 @@
 ## 当前状态
 
 - [x] 需求确认与项目骨架
-- [ ] 服务端核心（开发中）
-- [ ] Web 端 MVP
+- [x] 服务端核心（SignalR 游戏引擎 + 31 个单元测试）
+- [x] Web 端 MVP（建房/加入/画画/猜词/计分/房主设置/投票踢人/词库导入）
 - [ ] Android 端（第二阶段）
 
 ## 目录结构
@@ -26,4 +26,43 @@ deploy/   Docker Compose 与部署脚本
 tests/    .NET 单元测试
 ```
 
-详细文档见 [docs/](docs/)。
+## 快速开始
+
+### 开发模式
+
+```powershell
+# 终端 1：服务端（端口 5197）
+dotnet run --project server/DrawGuess.Server
+
+# 终端 2：前端（端口 5173）
+cd web
+pnpm install
+pnpm dev
+```
+
+### 一键部署
+
+```powershell
+# Docker（端口 8080）
+cd deploy
+.\run-docker.ps1
+
+# 非 Docker（端口 5197）
+.\deploy\run-local.ps1
+```
+
+部署细节、反向代理与 HTTPS 建议见 [docs/deployment.md](docs/deployment.md)。
+
+## 测试
+
+```powershell
+# 服务端单元测试（31 项）
+dotnet test DrawGuess.slnx
+
+# 端到端冒烟测试（需先启动服务端）
+cd tests/smoke
+pnpm install
+node smoke.mjs
+```
+
+需求、规则与协议文档见 [docs/](docs/)。
